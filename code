@@ -1,0 +1,96 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+void readData(const string& file_name, int& num_processes, int& num_resources, vector<int>& available, vector<vector<int>>& allocation, vector<vector<int>>& request) {
+    ifstream file(file_name);
+    if (!file) {
+        cerr << "error opening file!" << endl;
+        exit(1);
+    }
+
+    file >> num_processes >> num_resources;
+    available.resize(num_resources);
+    for (int i = 0; i < num_resources; i++) {
+        file >> available[i];
+    }
+
+    allocation.resize(num_processes, vector<int>(num_resources));
+    request.resize(num_processes, vector<int>(num_resources));
+
+    for (int i = 0; i < num_processes; i++) {
+        for (int j = 0; j < num_resources; j++) {
+            file >> allocation[i][j];
+        }
+    }
+
+    for (int i = 0; i < num_processes; i++) {
+        for (int j = 0; j < num_resources; j++) {
+            file >> request[i][j];
+        }
+    }
+    file.close();
+}
+
+bool detectDeadlock(const vector<int>& available, vector<vector<int>>& allocation, vector<vector<int>>& request, vector<int>& deadlocked_processes) {
+    int num_processes = allocation.size();
+    int num_resources = available.size();
+    vector<int> work = available;
+    vector<bool> finish(num_processes, false);
+    bool change = true;
+
+    while (change) {
+        change = false;
+        for (int i = 0; i < num_processes; i++) {
+            if (!finish[i]) {
+                bool can_allocate = true;
+                for (int j = 0; j < num_resources; j++) {
+                    if (request[i][j] > work[j]) {
+                        can_allocate = false;
+                        break;
+                    }
+                }
+                if (can_allocate) {
+                    for (int j = 0; j < num_resources; j++) {
+                        work[j] += allocation[i][j];
+                    }
+                    finish[i] = true;
+                    change = true;
+                }
+            }
+        }
+    }
+
+    bool deadlock = false;
+    for (int i = 0; i < num_processes; i++) {
+        if (!finish[i]) {
+            deadlocked_processes.push_back(i);
+            deadlock = true;
+        }
+    }
+    return deadlock;
+}
+
+int main() {
+    int num_processes, num_resources;
+    vector<int> available;
+    vector<vector<int>> allocation, request;
+    vector<int> deadlocked_processes;
+
+    readData("input.txt", num_processes, num_resources, available, allocation, request);
+
+    if (detectDeadlock(available, allocation, request, deadlocked_processes)) {
+        cout << "deadlock detected in processes: ";
+        for (int process : deadlocked_processes) {
+            cout << process << " ";
+        }
+        cout << endl;
+    } else {
+        cout << "no deadlock detected." << endl;
+    }
+
+    return 0;
+}
