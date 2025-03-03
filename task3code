@@ -1,0 +1,60 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <algorithm>
+
+#define MAX_FRAME 10
+
+struct Page {
+    int id;
+    unsigned int age;
+};
+
+int simulateaging(const std::vector<int>& references, int frames, int& totalFaults) {
+    std::vector<Page> pages;
+    totalFaults = 0;
+
+    for (int ref : references) {
+        bool found = false;
+        for (Page& page : pages) {
+            page.age >>= 1;
+            if (page.id == ref) {
+                page.age |= 1u << 31;
+                found = true;
+            }
+        }
+
+        if (!found) {
+            totalFaults++;
+            if (pages.size() < frames) {
+                pages.push_back({ref, 1u << 31});
+            } else {
+                auto it = std::min_element(pages.begin(), pages.end(), [](const Page& a, const Page& b) {
+                    return a.age < b.age;
+                });
+                *it = {ref, 1u << 31};
+            }
+        }
+    }
+    return totalFaults;
+}
+
+int main() {
+    std::ifstream file("pagesref.txt");
+    std::vector<int> references;
+    int reference;
+    while (file >> reference) {
+        references.push_back(reference);
+    }
+    file.close();
+
+    std::cout << "frame Count | page faults per 1000 references | total page faults\n";
+    for (int frames = 1; frames <= MAX_FRAME; frames++) {
+        int totalfaults = 0;
+        int faults = simulateaging(references, frames, totalfaults);
+        double faultsPer1000 = (faults * 1000.0) / references.size();
+        std::cout << "     " << frames << " | " << faultsPer1000 << " | " << faults << "\n";
+    }
+
+    return 0;
+}
