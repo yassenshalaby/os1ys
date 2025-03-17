@@ -1,0 +1,27 @@
+#include <iostream>
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
+int main(int argc, char* argv[]) {
+    if (argc < 2) {
+        std::cerr << "Usage: ./my_ls <directory1> <directory2> ..." << std::endl;
+        return 1;
+    }
+
+    for (int i = 1; i < argc; ++i) {
+        fs::path dir(argv[i]);
+        if (fs::exists(dir) && fs::is_directory(dir)) {
+            std::cout << "Listing files in: " << dir << std::endl;
+            for (const auto& entry : fs::directory_iterator(dir)) {
+                if (fs::is_regular_file(entry)) {
+                    std::cout << entry.path().filename() << std::endl;
+                }
+            }
+        } else {
+            std::cerr << dir << " is not a valid directory." << std::endl;
+        }
+    }
+
+    return 0;
+}
