@@ -31,7 +31,7 @@ int main() {
 
     std::cout << "Enter the directory path: ";
     std::cin >> directorypath;
-    std::cout << "Enter the bin width (e.g., 1024): ";
+    std::cout << "Enter the bin width: ";
     std::cin >> binwidth;
 
     fs::path directory(directorypath);
