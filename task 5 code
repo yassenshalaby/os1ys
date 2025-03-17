@@ -1,0 +1,50 @@
+#include <iostream>
+#include <fstream>
+#include <filesystem>
+#include <map>
+
+namespace fs = std::filesystem;
+
+void getfilesizes(const fs::path& directory, std::map<size_t, size_t>& sizebins, size_t binwidth) {
+    for (const auto& entry : fs::recursive_directory_iterator(directory)) {
+        if (fs::is_regular_file(entry)) {
+            size_t filesize = fs::file_size(entry);
+            size_t binindex = filesize / binwidth * binwidth;
+            sizebins[binindex]++;
+        }
+    }
+}
+
+void printhistogram(const std::map<size_t, size_t>& sizebins, size_t binwidth) {
+    for (const auto& bin : sizebins) {
+        std::cout << bin.first << " - " << bin.first + binwidth - 1 << ": ";
+        for (size_t i = 0; i < bin.second; ++i) {
+            std::cout << "#";
+        }
+        std::cout << " (" << bin.second << " files)" << std::endl;
+    }
+}
+
+int main() {
+    std::string directorypath;
+    size_t binwidth;
+
+    std::cout << "Enter the directory path: ";
+    std::cin >> directorypath;
+    std::cout << "Enter the bin width (e.g., 1024): ";
+    std::cin >> binwidth;
+
+    fs::path directory(directorypath);
+    if (!fs::exists(directory) || !fs::is_directory(directory)) {
+        std::cerr << "Invalid directory!" << std::endl;
+        return 1;
+    }
+
+    std::map<size_t, size_t> sizebins;
+
+    getfilesizes(directory, sizebins, binwidth);
+
+    printhistogram(sizebins, binwidth);
+
+    return 0;
+}
