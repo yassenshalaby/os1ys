@@ -1,0 +1,121 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <queue>
+using namespace std;
+
+struct P {
+    int i, a, b, w;
+};
+
+bool s1(P x, P y) {
+    return x.a < y.a;
+}
+
+bool s2(P x, P y) {
+    if (x.a == y.a) return x.b < y.b;
+    return x.a < y.a;
+}
+
+float f1(vector<P> v) {
+    sort(v.begin(), v.end(), s1);
+    int t = 0, wt = 0;
+    for (auto &x : v) {
+        if (t < x.a) t = x.a;
+        x.w = t - x.a;
+        wt += x.w;
+        t += x.b;
+    }
+    return (float)wt / v.size();
+}
+
+float f2(vector<P> v) {
+    sort(v.begin(), v.end(), s2);
+    int t = 0, wt = 0, done = 0;
+    vector<bool> d(v.size(), 0);
+    while (done < v.size()) {
+        int idx = -1, mn = 1e9;
+        for (int i = 0; i < v.size(); i++) {
+            if (!d[i] && v[i].a <= t && v[i].b < mn) {
+                mn = v[i].b;
+                idx = i;
+            }
+        }
+        if (idx == -1) {
+            t++;
+            continue;
+        }
+        v[idx].w = t - v[idx].a;
+        wt += v[idx].w;
+        t += v[idx].b;
+        d[idx] = 1;
+        done++;
+    }
+    return (float)wt / v.size();
+}
+
+float f3(vector<P> v, int q) {
+    int n = v.size();
+    vector<int> rt(n), at(n), bt(n), wt(n, 0);
+    for (int i = 0; i < n; i++) {
+        at[i] = v[i].a;
+        bt[i] = v[i].b;
+        rt[i] = bt[i];
+    }
+
+    queue<int> qx;
+    int t = 0, done = 0;
+    vector<bool> inq(n, 0);
+
+    while (done < n) {
+        for (int i = 0; i < n; i++) {
+            if (at[i] <= t && rt[i] > 0 && !inq[i]) {
+                qx.push(i);
+                inq[i] = 1;
+            }
+        }
+        if (qx.empty()) {
+            t++;
+            continue;
+        }
+        int i = qx.front();
+        qx.pop();
+
+        int dt = min(q, rt[i]);
+        rt[i] -= dt;
+        t += dt;
+
+        for (int j = 0; j < n; j++) {
+            if (at[j] <= t && rt[j] > 0 && !inq[j]) {
+                qx.push(j);
+                inq[j] = 1;
+            }
+        }
+
+        if (rt[i] > 0) {
+            qx.push(i);
+        } else {
+            wt[i] = t - at[i] - bt[i];
+            done++;
+        }
+        inq[i] = (rt[i] > 0);
+    }
+
+    int sum = 0;
+    for (int i = 0; i < n; i++) sum += wt[i];
+    return (float)sum / n;
+}
+
+int main() {
+    int n;
+    cin >> n;
+    vector<P> v(n);
+    for (int i = 0; i < n; i++) {
+        cin >> v[i].a >> v[i].b;
+        v[i].i = i;
+    }
+    cout << "FCFS: " << f1(v) << endl;
+    cout << "SJF: " << f2(v) << endl;
+    cout << "RR: " << f3(v, 2) << endl;
+    return 0;
+}
