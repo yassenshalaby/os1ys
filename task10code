@@ -1,0 +1,45 @@
+#include <iostream>
+#include <openssl/des.h>
+#include <cstring>
+#include <vector>
+
+using namespace std;
+
+void desEncrypt(const string &password, const string &salt, unsigned char *output) {
+    DES_key_schedule schedule;
+    DES_cblock key;
+
+    memcpy(key, salt.c_str(), 8);
+    DES_set_key_unchecked(&key, &schedule);
+
+    DES_cblock input;
+    memset(input, 0, 8);
+    memcpy(input, password.c_str(), min((size_t)8, password.size()));
+
+    for (int i = 0; i < 25; ++i) {
+        DES_ecb_encrypt(&input, &input, &schedule, DES_ENCRYPT);
+    }
+
+    memcpy(output, input, 8);
+}
+
+int main() {
+    vector<string> passwords = {
+        "password123", "12345", "qwerty", "letmein", "monkey",
+        "iloveyou", "abc123", "password1", "123qwe", "1qaz2wsx"
+    };
+
+    string salt = "1234abcd";
+    unsigned char encrypted[8];
+
+    for (const auto &pwd : passwords) {
+        desEncrypt(pwd.substr(0, 8), salt, encrypted);
+
+        cout << "Encrypted password for '" << pwd << "': ";
+        for (int i = 0; i < 8; ++i)
+            printf("%02x", encrypted[i]);
+        cout << endl;
+    }
+
+    return 0;
+}
