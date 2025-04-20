@@ -1,0 +1,40 @@
+#include <iostream>
+#include <winsock2.h>
+
+#pragma comment(lib, "Ws2_32.lib")
+#define SERVER_IP "127.0.0.1"
+#define PORT 8080
+#define BUFFER_SIZE 1024
+
+using namespace std;
+
+int main() {
+    WSADATA wsaData;
+    SOCKET clientSocket;
+    sockaddr_in serverAddr;
+    char buffer[BUFFER_SIZE];
+
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
+    clientSocket = socket(AF_INET, SOCK_STREAM, 0);
+
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_addr.s_addr = inet_addr(SERVER_IP);
+    serverAddr.sin_port = htons(PORT);
+
+    connect(clientSocket, (sockaddr*)&serverAddr, sizeof(serverAddr));
+    cout << "Connected to server!\n";
+
+    while (true) {
+        cout << "Client: ";
+        cin.getline(buffer, BUFFER_SIZE);
+        send(clientSocket, buffer, strlen(buffer), 0);
+
+        memset(buffer, 0, BUFFER_SIZE);
+        recv(clientSocket, buffer, BUFFER_SIZE, 0);
+        cout << "Server: " << buffer << endl;
+    }
+
+    closesocket(clientSocket);
+    WSACleanup();
+    return 0;
+}
